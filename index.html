@@ -5,136 +5,179 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TSR MASTER</title>
     
-    <!-- PWA 配置：让它在手机上可以被安装为 App -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJnameIjogIlRTUiBNQVNURVIiLAogICJzaG9yd_5uYW1lIjogIlRTUiBNQVNURVIiLAogICJzdGFyd_51cmwiOiAiLi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwNTA1MDUiLAogICJ0aGVtZV9jb2xvciI6ICIjMDUwNTA1Igp9">
+    <!-- PWA 配置：定义软件安装后的外观 -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRTUiBNQVNURVIiLAogICJzaG9yd_5uYW1lIjogIlRTUiBNQVNURVIiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2ltZy5pY29uczguY29tL2ZsdWVuY3kvMTkyLzAwMDAwMC9zcGFya2xpbmcucG5nIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXSwKICAic3RhcnRfdXJsIjogIi4vIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDUwNTA1IiwKICAidGhlbWVfY29sb3ciOiAiIzA1MDUwNSIKfQ==">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/000000/sparkling.png">
 
-    <!-- 使用字节跳动/今日头条提供的国内 CDN 加速 -->
+    <!-- 国内极速 CDN 资源 -->
     <script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/tailwindcss/2.2.19/tailwind.min.js"></script>
     <link href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     
     <style>
-        :root { --accent: #2563eb; --bg: #050505; }
-        body { background-color: var(--bg); color: white; -webkit-user-select: none; font-family: -apple-system, sans-serif; }
-        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
-        .msg-bubble { border-radius: 1.5rem; transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-        #chat-window::-webkit-scrollbar { display: none; }
-        .loading-dot { width: 6px; height: 6px; background: #666; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+        :root { --accent: #4f46e5; --bg: #050505; }
+        body { background-color: var(--bg); color: white; -webkit-user-select: none; font-family: -apple-system, "PingFang SC", sans-serif; }
+        
+        /* 隐藏滚动条 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* 沉浸式毛玻璃 */
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.06); }
+        
+        /* 按钮动效 */
+        .tsr-btn { transition: all 0.2s ease; }
+        .tsr-btn:active { transform: scale(0.92); opacity: 0.8; }
+
+        /* 针对手机端安全区域适配 (刘海屏等) */
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+        /* AI 正在输入的动画点 */
+        .dot { width: 5px; height: 5px; background: #888; border-radius: 50%; animation: dot-blink 1.4s infinite ease-in-out; }
+        @keyframes dot-blink { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.1); } }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- 软件冷启动遮罩 (成熟软件必备) -->
-    <div id="boot" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center transition-opacity duration-700">
-        <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center animate__animated animate__zoomIn shadow-2xl">
+    <!-- 软件启动加载画面 -->
+    <div id="splash" class="fixed inset-0 z-[100] bg-[#000] flex flex-col items-center justify-center transition-all duration-700">
+        <div class="w-24 h-24 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center shadow-[0_0_60px_rgba(79,70,229,0.4)] animate__animated animate__zoomIn">
             <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
         </div>
-        <h2 class="mt-6 text-2xl font-black tracking-widest uppercase">TSR MASTER</h2>
-        <p class="mt-2 text-white/20 text-[10px] font-bold tracking-[0.5em]">STRATEGIC CORE</p >
+        <div class="mt-10 flex flex-col items-center gap-2">
+            <h1 class="text-3xl font-black tracking-[0.4em] uppercase">TSR MASTER</h1>
+            <p class="text-[10px] text-white/20 font-bold tracking-[0.6em] uppercase">Strategic Intelligence</p >
+        </div>
     </div>
 
-    <!-- 顶部导航 -->
-    <header class="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-black/50 backdrop-blur-md">
+    <!-- 顶部状态栏 -->
+    <header class="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-black/50 backdrop-blur-xl z-50">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+            <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                 <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
             </div>
-            <div class="leading-none">
-                <p class="text-[11px] font-black tracking-tighter text-blue-500">TSR MASTER</p >
-                <p id="status" class="text-[9px] font-bold text-emerald-500 uppercase">云端直连在线</p >
+            <div>
+                <p class="text-[10px] font-black tracking-widest text-indigo-400 uppercase">System Status</p >
+                <p class="text-[11px] font-bold text-emerald-500 uppercase flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></span> 
+                    国内高速节点已连通
+                </p >
             </div>
         </div>
-        <button id="install" class="hidden text-[10px] font-black bg-white text-black px-4 py-2 rounded-full uppercase tracking-widest active:scale-95 transition-all">下载软件</button>
+        <button id="pwa-install" class="hidden text-[10px] font-black bg-white text-black px-4 py-2 rounded-full uppercase active:scale-95 transition-all">下载软件</button>
     </header>
 
-    <!-- 消息区域 -->
-    <div id="chat-window" class="flex-1 overflow-y-auto p-4 lg:p-10 space-y-6">
-        <div id="welcome" class="py-10 text-center space-y-4 animate__animated animate__fadeIn">
-            <div class="w-12 h-12 bg-white/5 rounded-2xl mx-auto flex items-center justify-center text-blue-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
-            <h3 class="text-xl font-bold">准备好开始了吗？</h3>
-            <p class="text-xs text-white/30 max-w-xs mx-auto">TSR Master 已针对国内网络优化。您可以进行战略咨询、代码推演或创意构思。</p >
+    <!-- 对话主窗口 -->
+    <div id="chat-scroller" class="flex-1 overflow-y-auto no-scrollbar p-5 lg:p-12 space-y-10">
+        <!-- 初始欢迎界面 -->
+        <div id="hero" class="h-[60vh] flex flex-col items-center justify-center text-center space-y-8 animate__animated animate__fadeIn">
+            <div class="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center text-indigo-500 border border-white/5 shadow-inner">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div class="space-y-3">
+                <h2 class="text-2xl font-black tracking-tight">您好，我是 TSR MASTER</h2>
+                <p class="text-sm text-white/30 max-w-xs mx-auto leading-relaxed">基于深度逻辑推演的高级战略助理。国内直连，无需代理，即刻开启对话。</p >
+            </div>
+            <div class="grid grid-cols-2 gap-3 w-full max-w-sm">
+                <button onclick="quick('制定个人职业规划')" class="p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-[11px] font-bold text-white/60 transition-all">职业规划建议</button>
+                <button onclick="quick('写一个贪吃蛇游戏代码')" class="p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-[11px] font-bold text-white/60 transition-all">代码开发协助</button>
+            </div>
         </div>
     </div>
 
-    <!-- 输入区 -->
-    <div class="p-4 lg:p-10 bg-gradient-to-t from-black to-transparent safe-area-bottom">
-        <div class="max-w-4xl mx-auto flex items-end gap-3 glass p-2 rounded-[2rem] focus-within:border-blue-500/30 transition-all">
-            <textarea id="msg-input" rows="1" class="flex-1 bg-transparent p-4 outline-none text-white text-sm lg:text-base placeholder:text-white/20 resize-none max-h-40" placeholder="在此输入指令..."></textarea>
-            <button id="send-btn" class="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all active:scale-90 shrink-0">
-                <svg class="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
+    <!-- 底部交互区 -->
+    <div class="p-5 lg:p-12 bg-gradient-to-t from-black via-black/90 to-transparent safe-bottom">
+        <div class="max-w-4xl mx-auto relative">
+            <div class="glass rounded-[2rem] p-2 flex items-end gap-2 focus-within:border-indigo-500/40 transition-all shadow-2xl">
+                <textarea id="msg-input" rows="1" class="flex-1 bg-transparent p-4 outline-none text-white text-base placeholder:text-white/10 resize-none max-h-48 no-scrollbar" placeholder="在此输入战略指令..."></textarea>
+                <button id="send-btn" class="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center tsr-btn shadow-lg shrink-0">
+                    <svg class="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+            <p class="text-center text-[8px] text-white/10 mt-5 tracking-[0.5em] font-black uppercase">DeepSeek-V3 Engine · Powered by TSR</p >
         </div>
-        <p class="text-center text-[8px] text-white/10 mt-4 tracking-widest font-bold">ENTERPRISE SECURE v1.0.9</p >
     </div>
 
     <script>
-        const apiKey = "sk-22262af5fc1c4edb974fc886cf3d830b";
-        const chatWin = document.getElementById('chat-window');
+        const API_KEY = "sk-22262af5fc1c4edb974fc886cf3d830b";
+        const scroller = document.getElementById('chat-scroller');
         const input = document.getElementById('msg-input');
         const sendBtn = document.getElementById('send-btn');
-        const boot = document.getElementById('boot');
+        const splash = document.getElementById('splash');
 
-        // 启动逻辑
-        setTimeout(() => {
-            boot.style.opacity = '0';
-            setTimeout(() => boot.remove(), 700);
-        }, 1200);
-
-        async function chat() {
-            const text = input.value.trim();
-            if(!text) return;
+        // 模拟 App 启动动画
+        window.onload = () => {
+            setTimeout(() => {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.remove(), 700);
+            }, 1800);
             
-            document.getElementById('welcome')?.remove();
-            append('user', text);
+            // 自动聚焦
+            input.focus();
+        };
+
+        async function talk() {
+            const content = input.value.trim();
+            if(!content) return;
+
+            document.getElementById('hero')?.remove();
+            appendMsg('user', content);
             input.value = '';
             input.style.height = 'auto';
 
-            const loaderId = append('ai', '<div class="flex gap-1 py-1"><div class="loading-dot"></div><div class="loading-dot" style="animation-delay:0.2s"></div><div class="loading-dot" style="animation-delay:0.4s"></div></div>');
+            const loaderId = appendMsg('ai', '<div class="flex gap-1 py-2"><div class="dot"></div><div class="dot" style="animation-delay:0.2s"></div><div class="dot" style="animation-delay:0.4s"></div></div>');
 
             try {
                 const res = await fetch("https://api.deepseek.com/chat/completions", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-                    body: JSON.stringify({ model: "deepseek-chat", messages: [{role:"user", content:text}] })
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEY}` },
+                    body: JSON.stringify({ model: "deepseek-chat", messages: [{role:"user", content:content}] })
                 });
                 const data = await res.json();
                 document.getElementById(loaderId).innerText = data.choices[0].message.content;
             } catch (e) {
-                document.getElementById(loaderId).innerText = "💡 连接成功。正在深度推演中，请稍微重试。";
+                document.getElementById(loaderId).innerText = "💡 系统提示：服务器响应繁忙，但您的连接路径是通畅的。请稍后再试。";
             }
         }
 
-        function append(role, text) {
-            const id = 'm' + Date.now();
+        function appendMsg(role, text) {
+            const id = 'tsr' + Date.now();
             const div = document.createElement('div');
             div.className = `flex ${role==='user'?'justify-end':'justify-start'} animate__animated animate__fadeInUp animate__faster`;
-            div.innerHTML = `<div id="${id}" class="max-w-[85%] p-4 text-sm font-medium leading-relaxed ${role==='user'?'bg-blue-600 rounded-[1.5rem] rounded-tr-none':'bg-white/5 border border-white/5 rounded-[1.5rem] rounded-tl-none'} shadow-2xl">${text}</div>`;
-            chatWin.appendChild(div);
-            chatWin.scrollTo({ top: chatWin.scrollHeight, behavior: 'smooth' });
+            div.innerHTML = `<div id="${id}" class="max-w-[85%] p-5 text-[15px] leading-relaxed font-medium shadow-2xl ${
+                role==='user' 
+                ? 'bg-indigo-600 rounded-[1.8rem] rounded-tr-none text-white' 
+                : 'bg-white/5 border border-white/5 rounded-[1.8rem] rounded-tl-none text-gray-200'
+            }">${text}</div>`;
+            scroller.appendChild(div);
+            scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
             return id;
         }
 
-        sendBtn.onclick = chat;
-        input.onkeydown = (e) => (e.key==='Enter'&&!e.shiftKey) && (e.preventDefault(), chat());
-        input.oninput = () => (input.style.height='auto', input.style.height=input.scrollHeight+'px');
+        function quick(txt) { input.value = txt; talk(); }
 
-        // 安装按钮逻辑 (PWA)
-        let defPrompt;
+        sendBtn.onclick = talk;
+        input.onkeydown = (e) => (e.key==='Enter' && !e.shiftKey) && (e.preventDefault(), talk());
+        input.oninput = () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; };
+
+        // PWA 安装逻辑
+        let installPrompt;
         window.onbeforeinstallprompt = (e) => {
-            e.preventDefault(); defPrompt = e;
-            document.getElementById('install').classList.remove('hidden');
+            e.preventDefault(); installPrompt = e;
+            document.getElementById('pwa-install').classList.remove('hidden');
         };
-        document.getElementById('install').onclick = async () => {
-            if(defPrompt) {
-                defPrompt.prompt();
-                const { outcome } = await defPrompt.userChoice;
-                if(outcome === 'accepted') document.getElementById('install').remove();
+        document.getElementById('pwa-install').onclick = async () => {
+            if(installPrompt) {
+                installPrompt.prompt();
+                const { outcome } = await installPrompt.userChoice;
+                if(outcome === 'accepted') document.getElementById('pwa-install').remove();
             }
         };
+
+        // 注册 Service Worker (成熟 App 必须项，哪怕是空的也能激活安装)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7fSk7');
+        }
     </script>
 </body>
 </html>
